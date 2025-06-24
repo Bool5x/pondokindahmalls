@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Tracker - Share & Track Locations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        .track-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(167, 119, 227, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(167, 119, 227, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(167, 119, 227, 0);
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-indigo-600 text-white p-6">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold">Link Tracker</h1>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-3 py-1 bg-indigo-800 rounded-full text-sm" id="totalTrackedLinks">0</span>
+                        <span class="px-3 py-1 bg-indigo-800 rounded-full text-sm" id="totalLocations">0</span>
+                    </div>
+                </div>
+                <p class="mt-2 opacity-90">Create tracking links and monitor locations</p>
+            </div>
+
+            <!-- Main Content -->
+            <div class="p-6">
+                <!-- Link Creation Section -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Create New Tracking Link</h2>
+                    <div class="flex space-x-2">
+                        <input type="text" id="linkName" placeholder="Link name (optional)" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="generateBtn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center">
+                            <i class="fas fa-link mr-2"></i> Generate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Generated Link -->
+                <div id="generatedLinkSection" class="hidden mb-8">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-800">Your Tracking Link</h2>
+                    <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+                        <div class="relative flex-1">
+                            <input type="text" id="trackingLink" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 focus:outline-none cursor-pointer" onclick="this.select()">
+                            <div id="copiedMsg" class="absolute top-12 left-0 bg-green-500 text-white px-3 py-1 rounded-lg opacity-0 transition-opacity duration-300">Copied!</div>
+                        </div>
+                        <button id="copyBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-copy mr-2"></i> Copy
+                        </button>
+                        <a id="shareWhatsappBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200 flex items-center justify-center">
+                            <i class="fab fa-whatsapp mr-2"></i> Share
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tracking Results -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Tracking Results</h2>
+                    <div id="noLinksMessage" class="text-center p-8 bg-gray-50 rounded-lg">
+                        <i class="fas fa-link text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No tracking links created yet. Generate your first link above!</p>
+                    </div>
+                    <div id="linksContainer" class="hidden space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Modal -->
+    <div id="locationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold" id="modalTitle">Location Details</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="mapContainer" class="hidden">
+                <div id="map" style="height: 250px; background-color: #f0f0f0;" class="rounded-lg mb-4 flex items-center justify-center">
+                    <p class="text-gray-500">Map will appear here</p>
+                </div>
+            </div>
+            <div id="locationInfo" class="hidden">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Latitude</p>
+                        <p class="font-medium" id="latitude"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Longitude</p>
+                        <p class="font-medium" id="longitude"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Accuracy</p>
+                        <p class="font-medium" id="accuracy"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Time</p>
+                        <p class="font-medium" id="time"></p>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Approximate Address</p>
+                    <p class="font-medium" id="address">Resolving address...</p>
+                </div>
+            </div>
+            <div id="noLocationInfo" class="text-center py-8">
+                <i class="fas fa-map-marker-alt text-4xl text-gray-300 mb-4"></i>
+                <p class="text-gray-500">Location data not available</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="closeModalBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if we're opening a tracking link
+        if (window.location.hash.startsWith('#track-')) {
+            handleTrackingLink();
+        } else {
+            setupLinkGenerator();
+        }
+
+        function setupLinkGenerator() {
+            // Generate unique ID
+            const userId = generateUserId();
+            const links = JSON.parse(localStorage.getItem(`trackingLinks_${userId}`)) || [];
+            const trackedEvents = JSON.parse(localStorage.getItem(`trackedEvents_${userId}`)) || {};
+            
+            // Update counters
+            document.getElementById('totalTrackedLinks').textContent = links.length;
+            document.getElementById('totalLocations').textContent = Object.keys(trackedEvents).reduce((sum, linkId) => sum + trackedEvents[linkId].length, 0);
+            
+            // Display existing links if any
+            if (links.length > 0) {
+                document.getElementById('noLinksMessage').classList.add('hidden');
+                document.getElementById('linksContainer').classList.remove('hidden');
+                renderLinks(links, trackedEvents);
+            }
+            
+            // Generate new link
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                const linkName = document.getElementById('linkName').value.trim() || `Link ${links.length + 1}`;
+                const linkId = generateId();
+                const trackingLink = `${window.location.origin}${window.location.pathname}#track-${linkId}`;
+                
+                links.push({ id: linkId, name: linkName, date: new Date().toISOString() });
+                localStorage.setItem(`trackingLinks_${userId}`, JSON.stringify(links));
+                
+                // Update UI
+                document.getElementById('trackingLink').value = trackingLink;
+                document.getElementById('generatedLinkSection').classList.remove('hidden');
+                document.getElementById('totalTrackedLinks').textContent = links.length;
+                
+                // Update links list
+                if (links.length === 1) {
+                    document.getElementById('noLinksMessage').classList.add('hidden');
+                    document.getElementById('linksContainer').classList.remove('hidden');
+                }
+                renderLinks(links, trackedEvents);
+                
+                // Copy button
+                document.getElementById('copyBtn').addEventListener('click', function() {
+                    const copyText = document.getElementById('trackingLink');
+                    copyText.select();
+                    document.execCommand('copy');
+                    
+                    const copiedMsg = document.getElementById('copiedMsg');
+                    copiedMsg.classList.remove('opacity-0');
+                    setTimeout(() => copiedMsg.classList.add('opacity-0'), 2000);
+                });
+                
+                // WhatsApp share button
+                const whatsappBtn = document.getElementById('shareWhatsappBtn');
+                whatsappBtn.href = `https://wa.me/?text=${encodeURIComponent(`Check this link: ${trackingLink}`)}`;
+            });
+        }
+
+        function handleTrackingLink() {
+            document.body.innerHTML = `
+                <div class="flex flex-col items-center justify-center min-h-screen gradient-bg text-white text-center p-6">
+                    <div class="mb-8 pulse">
+                        <i class="fas fa-map-marker-alt text-6xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold mb-2">Link Tracker</h1>
+                    <p class="mb-8 opacity-90">This link is being tracked for location data</p>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-4 max-w-md w-full">
+                        <p class="mb-4">This website will request your location to enable tracking.</p>
+                        <p class="text-sm opacity-80">The link creator will be able to see the time and location when you opened this link.</p>
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => sendLocationData(position),
+                        error => sendLocationData(null),
+                        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+                    );
+                } else {
+                    sendLocationData(null);
+                }
+            }, 2000);
+        }
+
+        function sendLocationData(position) {
+            const linkId = window.location.hash.replace('#track-', '');
+            if (!linkId) return;
+            
+            const trackingData = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                ip: '', // Not accessible directly in client-side JS
+                position: position ? {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    altitude: position.coords.altitude,
+                    heading: position.coords.heading,
+                    speed: position.coords.speed
+                } : null
+            };
+            
+            // In a real app, you would send this to a server
+            // For this demo, we'll store in localStorage for the creator's UI
+            alert(`Location data recorded (simulated in this demo). Latitude: ${position?.coords?.latitude || 'unavailable'}`);
+            
+            // For demo purposes, we'll close the window after showing the alert
+            setTimeout(() => {
+                window.close();
+            }, 3000);
+        }
+
+        function renderLinks(links, trackedEvents) {
+            const container = document.getElementById('linksContainer');
+            container.innerHTML = '';
+            
+            links.forEach(link => {
+                const events = trackedEvents[link.id] || [];
+                const card = document.createElement('div');
+                card.className = 'bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition duration-200 cursor-pointer';
+                card.addEventListener('click', () => showLocationDetails(link.id, events));
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-medium text-gray-800">${link.name}</h3>
+                            <p class="text-sm text-gray-500">Created: ${formatDate(link.date)}</p>
+                        </div>
+                        <div class="relative">
+                            <i class="fas fa-map-marker-alt text-indigo-600"></i>
+                            ${events.length > 0 ? `<span class="track-badge">${events.length}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function showLocationDetails(linkId, events) {
+            const modal = document.getElementById('locationModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const mapContainer = document.getElementById('mapContainer');
+            const locationInfo = document.getElementById('locationInfo');
+            const noLocationInfo = document.getElementById('noLocationInfo');
+            
+            modalTitle.textContent = `Tracking for Link: ${linkId}`;
+            
+            if (events.length > 0 && events[0].position) {
+                const position = events[0].position;
+                
+                // Update location info
+                document.getElementById('latitude').textContent = position.latitude;
+                document.getElementById('longitude').textContent = position.longitude;
+                document.getElementById('accuracy').textContent = `${Math.round(position.accuracy)} meters`;
+                document.getElementById('time').textContent = formatDate(events[0].timestamp);
+                
+                // For demo, we'll just show text - in a real app you'd embed a map
+                document.getElementById('map').innerHTML = `
+                    <div class="text-center">
+                        <p class="text-gray-600 mb-2">Map would display here</p>
+                        <p class="text-sm text-gray-500">Lat: ${position.latitude}, Lng: ${position.longitude}</p>
+                    </div>
+                `;
+                
+                // In a real app, you could:
+                // - Use Google Maps API: new google.maps.Map(document.getElementById('map'), {...})
+                // - Use Leaflet.js: L.map('map').setView([lat, lng], 13)
+                
+                mapContainer.classList.remove('hidden');
+                locationInfo.classList.remove('hidden');
+                noLocationInfo.classList.add('hidden');
+                
+                // Simulate address resolution
+                setTimeout(() => {
+                    document.getElementById('address').textContent = 'Approximate location resolved (simulated)';
+                }, 1000);
+            } else {
+                mapContainer.classList.add('hidden');
+                locationInfo.classList.add('hidden');
+                noLocationInfo.classList.remove('hidden');
+            }
+            
+            modal.classList.remove('hidden');
+            
+            // Close modal handlers
+            document.getElementById('closeModal').addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+            
+            document.getElementById('closeModalBtn').addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        function generateId() {
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        }
+
+        function generateUserId() {
+            let userId = localStorage.getItem('trackingUserId');
+            if (!userId) {
+                userId = generateId();
+                localStorage.setItem('trackingUserId', userId);
+            }
+            return userId;
+        }
+    </script>
+</body>
+</html>
